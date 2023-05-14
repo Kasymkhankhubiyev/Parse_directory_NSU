@@ -9,3 +9,7 @@ new_line = '\n'
 
 # commands
 commands = ['-l', '-s']
+
+file = 'file'
+
+directory = 'directory'
