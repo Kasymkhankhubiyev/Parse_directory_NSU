@@ -1,9 +1,10 @@
 import os
 import sys
 
-from helper import is_file_sign, is_dir_sign, new_line, commands, file, directory
+from helper import is_file_sign, is_dir_sign, commands
+from helper import ru_bytes, ru_Kbytes, ru_Mbytes, ru_Gbytes, Kbyte, Mbyte, Gbyte
 # сообщение об ошибке
-exception_message = 'Only directories'
+exception_message = 'Вводите только название директории'
 
 # отступ первого элемента в каталоге
 first_sign = '`-- '
@@ -35,9 +36,31 @@ def add_info_by_flags(path: str, command_flags: dict) -> str:
         else: add_str += is_dir_sign
     
     if command_flags['-s']:
-        add_str += f' - {os.stat(path).st_size} байт'
+        size = os.stat(path).st_size
+        add_str += f' - {scale_size(size)}'
 
     return add_str
+
+
+def scale_size(size: int):
+    """
+    функция форматирует размер файла и подставляет нужную размерность
+
+    Аргументы:
+        size, int - размер файла в байтах
+
+    Возвращаемое значение:
+        file_size, str - размер файла до первого знака после запятой
+                         с нужной размерностью в виде строки
+    """
+    if size >= Gbyte:
+        return f'{size / Gbyte :.1f} {ru_Gbytes}'
+    elif size >= Mbyte:
+        return f'{size / Mbyte :.1f} {ru_Mbytes}'
+    elif size >= Kbyte:
+        return f'{size / Kbyte :.1f} {ru_Kbytes}'
+    else:
+        return f'{size} {ru_bytes}'
 
 def is_path_to_file(path: str) -> None:
     """

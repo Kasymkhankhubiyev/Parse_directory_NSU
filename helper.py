@@ -10,6 +10,14 @@ new_line = '\n'
 # commands
 commands = ['-l', '-s']
 
-file = 'file'
+# 
+ru_bytes = 'байт'
 
-directory = 'directory'
+Kbyte = 1024
+ru_Kbytes = 'килобайт'
+
+Mbyte = 1024 ** 2
+ru_Mbytes = 'мегабайт'
+
+Gbyte = 1024 ** 3
+ru_Gbytes = 'гигабайт'
