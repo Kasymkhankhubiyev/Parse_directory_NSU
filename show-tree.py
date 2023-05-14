@@ -1,7 +1,7 @@
 import os
 import sys
 
-from helper import is_file_sign, is_dir_sign, new_line
+from helper import is_file_sign, is_dir_sign, new_line, commands
 # сообщение об ошибке
 exception_message = 'Only directories'
 
@@ -124,25 +124,35 @@ def pars_directory(path: str, deep: int, parent_is_first: bool) -> str:
 
     return dir_tree
 
+
+def check_input(input: list) -> list:
+    if input[0] in commands:
+        raise Exception(f'Сначала введите название директории')
+    if os.path.isfile(input[0]):
+        raise Exception(f'{exception_message}')
+    if len(input) > 0:
+        for i in range(len(input[1:])):
+            if input[i] not in commands:
+                raise Exception(f'Неизвестная команда {input[i]}, \n досутпные команды: {commands}')
+    return input
+
+
 def main() -> None:
 
     # получаем данные из командной строки - берем только последний аргумнет
-    path = sys.argv[-1]
+    try:
+        input = check_input(sys.argv[1:])
+    except Exception as e:
+        raise Exception(e.args)
 
     output = ''
-
-    # проверяем на директуорию
-    if os.path.isfile(path):
-        raise Exception(f'{exception_message}')
     
-    output += path.split(sep='/')[-1] + '\n'
+    output += input[0].split(sep='/')[-1] + '\n'
 
-    output += pars_directory(path, 0, True)   
+    output += pars_directory(input[0], 0, True)   
 
     print(output)
 
 
-
 if __name__ == '__main__':
     main()
-

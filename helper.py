@@ -7,4 +7,5 @@ is_dir_sign = ' (d)'
 # new line
 new_line = '\n'
 
-#
+# commands
+commands = ['-l', '-s']
