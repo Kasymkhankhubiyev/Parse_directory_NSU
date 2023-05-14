@@ -30,14 +30,22 @@ def add_info_by_flags(path: str, command_flags: dict) -> str:
         add_str, str - добавочная строка с данными в соответствии с активными флагами
     """
     add_str = ''
+
+    # если есть флаг '-l' - добавляем подписи
     if command_flags['-l']:
+        # проверяем является ли файлом
         if os.path.isfile(path):
             add_str += is_file_sign
         else: add_str += is_dir_sign
     
+    # если установлен флаг '-s' - добавляе размер
     if command_flags['-s']:
+        # получаем размер файла/директории в байтах
         size = os.stat(path).st_size
-        add_str += f' - {scale_size(size)}'
+        if command_flags['-h']: # если установлен флаг, тогда приводим к удобной размерности
+            add_str += f' - {scale_size(size)}'
+        else:
+            add_str += f' - {size} {ru_bytes}'
 
     return add_str
 

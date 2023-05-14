@@ -8,7 +8,7 @@ is_dir_sign = ' (d)'
 new_line = '\n'
 
 # commands
-commands = ['-l', '-s']
+commands = ['-l', '-s', '-h']
 
 # 
 ru_bytes = 'байт'
