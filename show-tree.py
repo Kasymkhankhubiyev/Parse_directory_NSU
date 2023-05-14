@@ -24,8 +24,10 @@ def add_info_by_flags(path: str, command_flags: dict) -> str:
     Аргументы:
         path, str - путь к файлу
         item, str - наименование файла
+
+    Возвращаемое значение:
+        add_str, str - добавочная строка с данными в соответствии с активными флагами
     """
-    print(command_flags)
     add_str = ''
     if command_flags['-l']:
         if os.path.isfile(path):
@@ -33,7 +35,7 @@ def add_info_by_flags(path: str, command_flags: dict) -> str:
         else: add_str += is_dir_sign
     
     if command_flags['-s']:
-        add_str += f' {os.stat(path).st_size}'
+        add_str += f' - {os.stat(path).st_size} байт'
 
     return add_str
 
@@ -52,7 +54,19 @@ def is_path_to_file(path: str) -> None:
     
 def process_file(index: int, item:str, parent_is_first: bool, deep: int, line: str, path: str, command_flags: dict) -> str:
     """
+    Эта функция собирает информацию о файле.
 
+    Аргументы:
+        index, int - индекст файла внутри родительской директори
+        parent_is_first, bool - является ли родительская директория первой в своей директории
+        deep, int - глубина ветви
+        item, str - наименование файла
+        path, str - путь к родительской папке
+        line, str - добавочная строка
+        command_flags, dict - список флагов команд
+
+    Возвращаемое значение:
+        output, str - строка с данными о текущем файле.
     """
     output = ''
     if index == 0: # если первый в списке директории
@@ -76,7 +90,20 @@ def process_file(index: int, item:str, parent_is_first: bool, deep: int, line: s
 def process_directory(index: int, parent_is_first: bool, deep: int, item: str, path: str, 
                       line: str, command_flags: dict) -> str:
     """
-    
+    Эта функция получает дерево директории. Рекурсивно проходим до конца ветви - конец ветви: пустая директория или
+                      директория, содержащая только файлы.
+
+    Аргументы:
+        index, int - индекст директории внутри родительской директори
+        parent_is_first, bool - является ли родительская директория первой в своей директории
+        deep, int - глубина ветви
+        item, str - наименование директории
+        path, str - путь к родительской папке
+        line, str - добавочная строка
+        command_flags, dict - список флагов команд
+
+    Возвращаемое значение:
+        output, str - дерево текущей директории.
     """
     output = ''
     if index == 0: # если первый в списке директории
@@ -179,18 +206,38 @@ def pars_directory(path: str, deep: int, parent_is_first: bool, command_flags: d
 
 def check_input(input: list, settings: dict) -> 'tuple(str, dict)':
     """
-    Эта функция проверяет введенные данные.
+    Эта функция проверяет введенные данные на корректность.
+    Ввод должен осуществляться так: `py show-tree.py test_dir -l`
+
+    в функцию попадает только часть после названия функции show-tree.py.
+
+    Во первых проверяем, чтобы после `show-tree.py` было сначала написано название директории,
+    а не флаг, потом, что название является директорией, а не файлом и далее проверяем доступные флаги.
+
+    Аргументы:
+        input, list[str] - список введенных элемнетов.
+        settings, dict - словарь команд-фладков формата {'flag_name': False},
+                         если в input есть нужные флаг, то устнаваливается True
+
+    Возвращаемое значение:
+        directory, settinds, tuple(str, dict) - возвращаем название директории и словарь с флагами.
     """
+    # проверяем, что флаг не ввели перед названием директории
     if input[0] in commands:
         raise Exception(f'Сначала введите название директории')
+    
+    # проверяем указывает ли путь на файл, если да - бросаем исключение
     if os.path.isfile(input[0]):
         raise Exception(f'{exception_message}')
-    if len(input) > 0:
-        for i in range(1, len(input[1:])+1):
+    
+    # если есть флаги команд - обработаем их
+    if len(input) - 1 > 0:
+        for i in range(1, len(input[1:])+1): # берем длину списка без имени директории и шагаем с первого флага
+            # проверяем, существует ли введенный флаг, если нет - бросаем исключение.
             if input[i] not in commands:
                 raise Exception(f'Неизвестная команда {input[i]}, \n досутпные команды: {commands}')
-            print(settings[input[i]])
-            settings[input[i]] = True
+            # устанавливаем флаг в True
+            settings[input[i]] = True 
     return input[0], settings
 
 
@@ -202,6 +249,7 @@ def main() -> None:
         input_commands[command] = False
 
     try:
+        # проверяем ввод
         path, input_commands = check_input(sys.argv[1:], input_commands)
     except Exception as e:
         raise Exception(e.args)
