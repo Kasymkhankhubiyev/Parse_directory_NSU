@@ -1,8 +1,8 @@
 import os
 import sys
 
-from .helper import is_file_sign, is_dir_sign, commands
-from .helper import ru_bytes, ru_Kbytes, ru_Mbytes, ru_Gbytes, Kbyte, Mbyte, Gbyte
+from helper import is_file_sign, is_dir_sign, commands
+from helper import ru_bytes, ru_Kbytes, ru_Mbytes, ru_Gbytes, Kbyte, Mbyte, Gbyte
 # сообщение об ошибке
 exception_message = 'Вводите только название директории'
 
