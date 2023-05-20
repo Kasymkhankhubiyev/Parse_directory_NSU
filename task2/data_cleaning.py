@@ -81,7 +81,7 @@ def fill_gaps(data: pd.DataFrame, method=MEAN):
         return fill_data_gaps_max_likelihood(data)
 
 
-def data_cleaner(data_path: str, column_drop_critical_value=0.25, fill_gaps_method=MEAN, dropout_method=MIN, 
+def data_cleaner(data=None, data_path=None, column_drop_critical_value=0.25, fill_gaps_method=MEAN, dropout_method=MIN, 
                  dropout_critical_difference=None, save_path='/cleaned_dataframe/'):
     """
     Функция - конвейер очистки данных.
@@ -94,6 +94,7 @@ def data_cleaner(data_path: str, column_drop_critical_value=0.25, fill_gaps_meth
         5. Сохранение обработанных данных по указаному адресу.
 
     Аргументы:
+        data, pd.DataFrame - датафрейм, который нужно обработать
         data_path, str - путь к файлу для чтения в формате csv
         column_drop_critical_value, float - критическое значение доли пропущенных значений в столбце,
                                             чтобы исключить столбец, 
@@ -108,17 +109,20 @@ def data_cleaner(data_path: str, column_drop_critical_value=0.25, fill_gaps_meth
                               'max' - замена максимальным значением из невыбросов,
                               'mean' - замена средним значением из невыбросов,
                               'median' - заполнение медианным значением из невыбросов.
-        dropout_critical_difference, float - величина максимальная величина разброса от медианного значения, 
-                                             определяющая выброс.
+        dropout_critical_difference, float - максимальная величина отклонения от медианного значения, определяющая выброс.
 
     Возвращаемое значение:
         dataframe, pd.DataFrame - датафрейм очищенный.
 
     """
 
+    if data is None and data_path is not None:
     # читаем данные
-    dataframe = pd.read_csv(data_path)
+        data = pd.read_csv(data_path)
+    else:
+        raise Exception('Введите либо датафрейм или путь к файлу с данными')
 
+    dataframe = data
     # выбрасываем дубликаты
     dataframe = dataframe.drop_duplicates()
 

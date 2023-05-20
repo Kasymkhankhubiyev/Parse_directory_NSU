@@ -38,27 +38,33 @@ def _find_nan_columns(data: pd.DataFrame) -> list:
     return nan_columns
 
 
-def _label_numeric_encoder(data: pd.Series) -> pd.DataFrame:
-    new_data = data.copy()
-    unique_items = data.unique()
-    data_values = np.array([data.values])
-    unique_indexes = np.array([np.int32(i) for i in range(len(unique_items))])
-
-    for i in range(len(data_values)):
-        for idx, item in enumerate(unique_items):
-            if new_data[i] is not None:
-                if new_data[i] == item:
-                    # new_data[i] = unique_indexes[np.where(unique_items == new_data[i])].flatten()
-                    new_data[i] = unique_indexes[idx]
-
-    return new_data
-
-
 def convertToNumeric(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Функция конвертирует качественные характеристики в числовые.
+
+    применяется LabelEncoder из библиотеки cikit-learn
+
+    кодировка осуществляется следующим образом:
+        получаем список уникальных значений и каждому уникальному значению 
+        присваивается уникальный номер.
+
+    Аргументы:
+        data, pd.DataFrame - датафрейм, над которым необходимо произвести преобразования
+
+    Возвращаемое значение:
+        new_data, pd.DataFrame - датафрейм только с числовыми признаками
+    """
+    # копируем датафрейм, чтобы не испортить исходный
     new_data = data.copy()
+
+    # инициализируем инкодер
     LE = LabelEncoder()
+
+    # пробежимся по столбцам
     for feature in new_data.columns[:-1]:
+        # интересуют только качественные признаки
         if (new_data[feature].dtype == 'object'):
+            # заменяем столбец
             new_data[feature] = LE.fit_transform(new_data[feature])
             # new_data[feature] = _label_numeric_encoder(new_data[feature])
     return new_data
@@ -164,4 +170,32 @@ def fill_data_gaps_median(data: pd.DataFrame) -> pd.DataFrame:
 
 def fill_data_gaps_max_likelihood(data: pd.DataFrame) -> pd.DataFrame:
     return _fill_data_gaps_max_likelihood(data=data, nan_columns=_find_nan_columns(data))
+
+
+
+#### TODO: needs fixes
+
+def _label_numeric_encoder(data: pd.Series) -> pd.Series:
+    """
+    Инкодер строковых значений в числовое
+
+    Аргументы:
+        data, pd.Series - столбец, над которым нуобходимо произвести преобразования
+
+    Возвращаемое значение
+        new_data, pd.Series - столбец с измененными значениями
+    """
+    new_data = data.copy()
+    unique_items = data.unique()
+    data_values = np.array([data.values])
+    unique_indexes = np.array([np.int32(i) for i in range(len(unique_items))])
+
+    for i in range(len(data_values)):
+        for idx, item in enumerate(unique_items):
+            if new_data[i] is not None:
+                if new_data[i] == item:
+                    # new_data[i] = unique_indexes[np.where(unique_items == new_data[i])].flatten()
+                    new_data[i] = unique_indexes[idx]
+
+    return new_data
 

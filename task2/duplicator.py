@@ -3,6 +3,14 @@ import pandas as pd
 
 
 def _randomize_index(dataset_length: int):
+    """
+    Реализуем генерацию случайных индексов и разделителя для
+    вставки дубликатов.
+
+    Аргументы:
+        dataset_length, int - размер датасета
+    """
+
     power = int(np.floor(np.log10(dataset_length)))
     # print(powers)
     idx = 0
@@ -24,6 +32,16 @@ def _randomize_index(dataset_length: int):
 
 
 def add_duplicates_randomly(data: pd.DataFrame, duplicates_num: int) -> pd.DataFrame:
+    """
+    Функция рандомно вставляет дупликаты рандомно выбранных элементов.
+
+    Аргументы:
+        data, pd.DataFrame - датафрейм, в который нужно вставить дубликаты
+        duplicates_num, int - количество дубликатов, которые нужно вставить
+
+    Возвращаемое значение:
+        new_data_frame, pd.DataFrame - новый датафрейм с дубликатами.
+    """
 
     new_data_frame = data.copy()
 
