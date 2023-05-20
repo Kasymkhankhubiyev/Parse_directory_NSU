@@ -1,3 +1,17 @@
+"""
+В данном приложении реализован конвейер, обрабатывающий данные из csv
+
+взаимодействие осуществляется через функцию data_cleaner(*args), на вход которой подается путь к файлу.
+
+Осуществляются следующие этапы:
+
+    1. Чтение файла и загрузга кадра данных
+    2. Удаление дубликатов 
+    3. Обработка пропущенных значений
+    4. Обработка выбросов
+    5. Сохранение обработанных данных по указаному адресу.
+
+"""
 import pandas as pd 
 import numpy as np
 
@@ -5,66 +19,123 @@ import numpy as np
 from fill_data_gaps import fill_data_gaps_mean, fill_data_gaps_median, fill_data_gaps_nearest, fill_data_gaps_max_likelihood
 from fill_data_gaps import MEAN, MEDIAN, NEAREST_NEIGHBOR, MAX_LIKELIHOOD
 
-
-def prepare_dataset(data_frame: pd.DataFrame) -> list:
-    """
+from data_dropouts_processing import MAX, MIN, replace_dropouts
     
+
+def delete_NaN(data: pd.DataFrame, critical_value: float) -> pd.DataFrame:
+    """
+    Функция реализует удаление столбцов, количеством пропущенных значений
+    в которых превышает заданное максимальное значение.
+
+    Столбцы с большим количеством пропусков не информативны и лишь только испортят работу.
+
+    Аргументы:
+        data, pd.DataFrame - кадр данных, который нужно очистить от неиформативных столбцов.
+        critical_value, float - величина критической доли пропущенных значений от количества строк.
+
+    Возвращаемое значение:
+        new_data, pd.DataFrame - кадр данных без неинформативных столбцов.
+    """
+    # скопируем датафрейм, чтобы не навредить исходным данным
+    new_data = data.copy()
+
+    # получаем список заголовком столбцов
+    columns = new_data.columns
+
+    # пробежимся во всем столбцам
+    for column in columns:
+        # посчитаем количество пустых значений для текущего столбца
+        nulls = new_data[column].isnull().sum()
+
+        # расчитаем долю пропущенных значений
+        ratio = nulls / new_data.shape[0]
+
+        # если доля пропущенных значений больше критического значения
+        # столбец не информативен - выбрасываем его
+        if ratio > critical_value:
+            new_data = new_data.drop(columns = column)
+    
+    return new_data
+
+
+def fill_gaps(data: pd.DataFrame, method=MEAN):
+    """
+    Функция - коммутатор. Вызывает нужную функцию из пакета fill_data_gaps.py в
+    соответствии с указанным методом заполнения пропущенных значений.
+
+    Аргументы:
+        data, pd.DataFrame - датафрейм, в котором нужно заполнить пропуски.
+        method, str - метод заполнения пропущенных значений, принимает начения:
+                        'mean' - заполнение средним значением,
+                        'median' - заполнение медианным значением,
+                        'nearest_neighbor' - ближайшее значение,
+                        'max_likelihood' - заполнение методом максимизации функции правдоподобия (в разработке)
+    """
+    if method == MEAN:
+        return fill_data_gaps_mean(data)
+    elif method == MEDIAN:
+        return fill_data_gaps_median(data)
+    elif method == NEAREST_NEIGHBOR:
+        return fill_data_gaps_nearest(data)
+    elif method == MAX_LIKELIHOOD:
+        return fill_data_gaps_max_likelihood(data)
+
+
+def data_cleaner(data_path: str, column_drop_critical_value=0.25, fill_gaps_method=MEAN, dropout_method=MIN, 
+                 dropout_critical_difference=None, save_path='/cleaned_dataframe/'):
+    """
+    Функция - конвейер очистки данных.
+
+    Реализует следуюшщие этапы:
+        1. Чтение файла и загрузга кадра данных
+        2. Удаление дубликатов 
+        3. Обработка пропущенных значений
+        4. Обработка выбросов
+        5. Сохранение обработанных данных по указаному адресу.
+
+    Аргументы:
+        data_path, str - путь к файлу для чтения в формате csv
+        column_drop_critical_value, float - критическое значение доли пропущенных значений в столбце,
+                                            чтобы исключить столбец, 
+                                            принимает значение от 0 до 1.
+        fill_gaps_method, str - метод заполнения пропущенных значений, принимает следующие значения:
+                                'mean' - заполнение средним значением,
+                                'median' - заполнение медианным значением,
+                                'nearest_neighbor' - ближайшее значение,
+                                'max_likelihood' - заполнение методом максимизации функции правдоподобия (в разработке).
+        dropout_method, str - метод замены выбросов, принимает следующие значения:
+                              'min' - замена минимальным значением из невыбросов,
+                              'max' - замена максимальным значением из невыбросов,
+                              'mean' - замена средним значением из невыбросов,
+                              'median' - заполнение медианным значением из невыбросов.
+        dropout_critical_difference, float - величина максимальная величина разброса от медианного значения, 
+                                             определяющая выброс.
+
+    Возвращаемое значение:
+        dataframe, pd.DataFrame - датафрейм очищенный.
+
     """
 
-    # коныертируем в словарь с элементами в виде списка
-    data_dict = data_frame.to_dict(orient='list')
+    # читаем данные
+    dataframe = pd.read_csv(data_path)
 
-    # получаем ключи и ковертируем в список
-    keys = list(data_dict.keys())
+    # выбрасываем дубликаты
+    dataframe = dataframe.drop_duplicates()
 
-    # запомним количество строк
-    rows = len(data_dict[keys[0]])
+    # удаление неинформативных строк
+    dataframe = delete_NaN(data=dataframe, critical_value=column_drop_critical_value)
 
-    data_list = []
+    # обработка пропущенных значений
+    dataframe = fill_gaps(data=dataframe, method=fill_gaps_method)
 
-    for row in range(rows):
-        data_item = []
-        for key in keys:
-            data_item.append(data_dict[key][row])
-        data_list.append(data_item)
-
-    return data_list
-
-
-def _randomize_index(dataset_length: int):
-    power = int(np.floor(np.log10(dataset_length)))
-    # print(powers)
-    idx = 0
-    if power % 2 == 0:
-        for i in range(power // 2):
-            # if (i + 1) * 2 == power:
-            #     randint = np.abs(dataset_length % 10 ** ((i + 1) * 2))
-            # else: randint = 101
-            idx += 10 ** (i * 2) * np.random.randint(101)
-        idx += 10 ** (power-1) * np.random.randint(dataset_length // 10 ** (power-1))
-    else:
-        for i in range(power // 2):
-            idx += 10 ** (i * 2) * np.random.randint(101)
-        idx += 10 ** (power-1) * np.random.randint(dataset_length // 10 ** (power-1))
-
-    if idx > dataset_length:
-        return dataset_length - 1
-    else: return idx
-
-
-def add_duplicates_randomly(data: pd.DataFrame, duplicates_num: int) -> pd.DataFrame:
-
-    new_data_frame = data.copy()
-
-    for i in range(duplicates_num):
-        idx = _randomize_index(data.shape[0])
-        separator = _randomize_index(new_data_frame.shape[0])
-
-        data_sample = data.iloc[[idx]]
-        new_data_frame = pd.concat([new_data_frame.iloc[:separator], data_sample, new_data_frame[separator:]])
-
-    return new_data_frame
+    # обработка выбросов
+    dataframe = replace_dropouts(data=dataframe, method=dropout_method, critical_distance=dropout_critical_difference)
     
+    return dataframe
+
+
+
+## TODO: needs further fixing
 
 def remove_duplicates(data: pd.DataFrame, method: str, keep='first') -> list:
     """
@@ -94,52 +165,4 @@ def remove_duplicates(data: pd.DataFrame, method: str, keep='first') -> list:
                     new_data = pd.concat([new_data, data.iloc[[i]]])
 
         return new_data
-    
 
-def delete_NaN(data: pd.DataFrame, critical_value: float) -> pd.DataFrame:
-    """
-    
-    """
-    new_data = data.copy()
-    columns = new_data.columns
-    # пробежимся во всем столбцам
-    for column in columns:
-        # посчитаем количество пустых значений для текущего столбца
-        nulls = new_data[column].isnull().sum()
-        ratio = nulls / new_data.shape[0]
-        # если доля пропущенных значений больше критического значения
-        # столбец не информативен - выбрасываем его
-        if ratio > critical_value:
-            new_data = new_data.drop(columns = column)
-    
-    return new_data
-
-
-def fill_gaps(data: pd.DataFrame, method=MEAN):
-    if method == MEAN:
-        return fill_data_gaps_mean(data)
-    elif method == MEDIAN:
-        return fill_data_gaps_median(data)
-    elif method == NEAREST_NEIGHBOR:
-        return fill_data_gaps_nearest(data)
-    elif method == MAX_LIKELIHOOD:
-        return fill_data_gaps_max_likelihood(data)
-
-
-def data_cleaner(data: pd.DataFrame, column_drop_critical_value=0.25, fill_gaps_method=MEAN):
-    # создадим копию дата-кадра
-    new_dataframe = data.copy()
-
-    # выбрасываем дубликаты
-    new_dataframe = new_dataframe.drop_duplicates()
-
-    # удаление неинформативных строк
-    new_dataframe = delete_NaN(data=new_dataframe, critical_value=column_drop_critical_value)
-
-    # обработка пропущенных значений
-    new_dataframe = fill_gaps(data=new_dataframe, method=fill_gaps_method)
-
-    # обработка выбросов
-    
-
-    return new_dataframe
