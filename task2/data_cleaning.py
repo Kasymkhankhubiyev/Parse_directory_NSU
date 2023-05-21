@@ -14,6 +14,7 @@
 """
 import pandas as pd 
 import numpy as np
+import os
 
 
 from fill_data_gaps import fill_data_gaps_mean, fill_data_gaps_median, fill_data_gaps_nearest, fill_data_gaps_max_likelihood
@@ -82,7 +83,7 @@ def fill_gaps(data: pd.DataFrame, method=MEAN):
 
 
 def data_cleaner(data=None, data_path=None, column_drop_critical_value=0.25, fill_gaps_method=MEAN, dropout_method=MIN, 
-                 dropout_critical_difference=None, save_path='/cleaned_dataframe/'):
+                 dropout_critical_difference=None, save_path='/cleaned_dataframe', save_file_name='out.csv'):
     """
     Функция - конвейер очистки данных.
 
@@ -135,6 +136,11 @@ def data_cleaner(data=None, data_path=None, column_drop_critical_value=0.25, fil
     # обработка выбросов
     dataframe = replace_dropouts(data=dataframe, method=dropout_method, critical_distance=dropout_critical_difference)
     
+    # создаем каталог, если существует, ничего не произойдет 
+    os.makedirs(save_path, exist_ok=True)  
+
+    # загружаем в файл
+    dataframe.to_csv(save_path + '/' + save_file_name)  
     return dataframe
 
 
