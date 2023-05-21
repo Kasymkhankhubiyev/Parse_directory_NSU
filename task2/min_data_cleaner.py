@@ -251,7 +251,7 @@ def data_cleaner(data=None, data_path=None, column_drop_critical_value=0.25, dro
             data = pd.read_csv(data_path)
         except:
             raise Exception('Ошибка при чтении файла, проверьте путь к файлу.')
-    else:
+    elif data is None and data_path is None:
         # если ничего не передали выдаем ошибку
         raise Exception('Введите либо датафрейм или путь к файлу с данными.')
 
