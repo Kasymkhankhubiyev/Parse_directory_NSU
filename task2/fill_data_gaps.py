@@ -96,10 +96,35 @@ def convertToNumeric(data: pd.DataFrame) -> pd.DataFrame:
 
 def _fill_data_gaps_dist(data: pd.DataFrame, nan_columns: list) -> pd.DataFrame:
     """
-    
+    Функция заполняет пустые значения данных наиболее ближайшим значением.
+
+    Расстояние рассчитывается как евклидово расстояние и ближайший определяется 
+    минимумом расстояния до элемента.
+
+    Если попадаются качественные признаки, кодируем их в числовые признаки.
+
+    Сначала удаляются все столбцы с пропусками (заполненные ранее не удаляются),
+    вытаскиваем только строки без пропусков и по ним заполняем пропуски.
+
+    Расстояние рассчитывается так:
+        :math:  `distance = \sum(x^a_i - x^b_i)` , 
+            где x^a_i - элемент из выборки с пропущенными значениями,
+                x^b_i - элемент из выборки с без пропущенныч значений,
+
+    Аргументы: 
+        data, pd.DataFrame - датафрейм, в котором нужно заполнить пропуски
+        nan_columns - список заголовков столбцов, содержащих пропуски
+
+    Возвращаемое значение:
+        new_data, pd.DataFrame - датафрейм с заполненными пропусками
     """
+    # создаем копию датасета
     df = data.copy()
+    
+    # конвертируе все качественные характеристики в числовые
     df = convertToNumeric(df)
+
+    # пробежимся по всем пустым колонкам
     for i in range(len(nan_columns)):
         
         # начинаем обучать с колонки с наименьшим кол-вом пропущенных значений
@@ -143,7 +168,20 @@ def _fill_data_gaps_dist(data: pd.DataFrame, nan_columns: list) -> pd.DataFrame:
 
 def _fill_data_gaps_mean(data: pd.DataFrame, nan_columns: list) -> pd.DataFrame:
     """
-    
+    Функция заполняет пустые значения данных средним значением в столбце,
+    такой подход не изменяется среднего значения в датасете.
+
+    Если попадаются качественные признаки - заполняем медианным значением
+
+    Сначала удаляются все столбцы с пропусками (заполненные ранее не удаляются),
+    вытаскиваем только строки без пропусков и по ним заполняем пропуски.
+
+    Аргументы: 
+        data, pd.DataFrame - датафрейм, в котором нужно заполнить пропуски
+        nan_columns - список заголовков столбцов, содержащих пропуски
+
+    Возвращаемое значение:
+        new_data, pd.DataFrame - датафрейм с заполненными пропусками
     """
     # скопируем кадр данных
     new_data = data.copy()
@@ -157,6 +195,7 @@ def _fill_data_gaps_mean(data: pd.DataFrame, nan_columns: list) -> pd.DataFrame:
         # вытаскиваем значения
         targets = not_nan_df[nan_columns[i][0]].values  # np.array
 
+        # если это качественные характеристики, просто заменяем медианным.
         if type(targets[0]) == str:
             # берем середину
             idx = int(np.floor(len(targets) / 2))
@@ -176,7 +215,90 @@ def _fill_data_gaps_mean(data: pd.DataFrame, nan_columns: list) -> pd.DataFrame:
 
 
 def _fill_data_gaps_median(data: pd.DataFrame, nan_columns: list) -> pd.DataFrame:
-    pass
+    """
+    Функция заполняет пустые значения данных медианным значением.
+
+    Сначала удаляются все столбцы с пропусками (заполненные ранее не удаляются),
+    вытаскиваем только строки без пропусков и по ним заполняем пропуски.
+
+    Аргументы: 
+        data, pd.DataFrame - датафрейм, в котором нужно заполнить пропуски
+        nan_columns - список заголовков столбцов, содержащих пропуски
+
+    Возвращаемое значение:
+        new_data, pd.DataFrame - датафрейм с заполненными пропусками
+    """
+    # скопируем кадр данных
+    new_data = data.copy()
+
+    # пробежимся по всем строкам с пропусками
+    for i in range(len(nan_columns)):
+
+        # берем только строки без пропусков
+        not_nan_df = new_data[new_data[nan_columns[i][0]].notnull()]
+
+        # вытаскиваем значения
+        targets = not_nan_df[nan_columns[i][0]].values  # np.array
+
+        # берем середину
+        idx = int(np.floor(len(targets) / 2))
+        mean = np.sort(targets)[idx]
+
+        # теперь заполним пропуски
+        # для этого нам нужно пометить строки с пропусками
+        rows = new_data[nan_columns[i][0]].isnull()
+        for k in range(len(rows)):
+            if rows[k]:
+                new_data.loc[k, nan_columns[i][0]] = mean  
+
+    return new_data
+
+
+def _fill_data_gaps_most_frequent(data: pd.DataFrame, nan_columns: list) -> pd.DataFrame:
+    """
+    Функция заполняет пустые значения данных на основе статистических данных,
+    т.е. ведется подсчет наиболее часто встречаемого и этим значением заполняются пропуски.
+
+    Такой подход применяется, например, в CatBoost от Yandex при обработке пропусков.
+    Мы в данной работе применим простой метод заполнения статистическим значением.
+
+    Сначала удаляются все столбцы с пропусками (заполненные ранее не удаляются),
+    вытаскиваем только строки без пропусков, подсчитываются вхождения всех уникальных значений,
+    берется наиболее часто встречаемое и заполняется пропуск.
+
+
+    Аргументы: 
+        data, pd.DataFrame - датафрейм, в котором нужно заполнить пропуски
+        nan_columns - список заголовков столбцов, содержащих пропуски
+
+    Возвращаемое значение:
+        new_data, pd.DataFrame - датафрейм с заполненными пропусками
+    """
+    # скопируем кадр данных
+    new_data = data.copy()
+
+    # пробежимся по всем строкам с пропусками
+    for i in range(len(nan_columns)):
+
+        # берем только строки без пропусков
+        not_nan_df = new_data[new_data[nan_columns[i][0]].notnull()]
+
+        # вытаскиваем значения
+        targets = not_nan_df[nan_columns[i][0]].values  # np.array
+
+        # получим подсчет количества вхождений каждого уникального значения
+        appearance = not_nan_df[nan_columns[i][0]].value_counts()
+
+        most_frequent = appearance[np.argmax(appearance.values)]
+
+        # теперь заполним пропуски
+        # для этого нам нужно пометить строки с пропусками
+        rows = new_data[nan_columns[i][0]].isnull()
+        for k in range(len(rows)):
+            if rows[k]:
+                new_data.loc[k, nan_columns[i][0]] = most_frequent 
+
+    return new_data
 
 
 def _fill_data_gaps_max_likelihood(data: pd.DataFrame, nan_columns: list) -> pd.DataFrame:
@@ -195,13 +317,11 @@ def fill_data_gaps_median(data: pd.DataFrame) -> pd.DataFrame:
 def fill_data_gaps_max_likelihood(data: pd.DataFrame) -> pd.DataFrame:
     return _fill_data_gaps_max_likelihood(data=data, nan_columns=_find_nan_columns(data))
 
+def fill_data_gaps_most_frequent(data: pd.DataFrame) -> pd.DataFrame:
+    return _fill_data_gaps_most_frequent(data=data, nan_columns=_find_nan_columns(data))
 
 
 #### TODO: needs fixes
-
-def _fill_data_gaps_most_freequent(data: pd.DataFrame, nan_columns: list) -> pd.DataFrame:
-    pass
-
 
 def _label_numeric_encoder(data: pd.Series) -> pd.Series:
     """

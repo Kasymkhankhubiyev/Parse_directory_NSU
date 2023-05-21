@@ -120,7 +120,7 @@ def data_cleaner(data=None, data_path=None, column_drop_critical_value=0.25, fil
     if data is None and data_path is not None:
     # читаем данные
         data = pd.read_csv(data_path)
-    else:
+    elif data is None and data_path is None:
         raise Exception('Введите либо датафрейм или путь к файлу с данными')
 
     dataframe = data
