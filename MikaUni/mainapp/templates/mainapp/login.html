@@ -1,0 +1,18 @@
+{% extends 'layouts/login.html' %}
+
+{% block title %}Вход{% endblock %}
+
+{% block body %}
+<div class="container border pt-5 ms-5 pb-3 mt-5">
+    {% if user.is_authenticated %}
+    <p>Вы уже вошли в систему WiS</p>
+    {% else %}
+    <h1>Заполните форму для входа.</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" class="btn btn-primary" value="Подтвердить">
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
