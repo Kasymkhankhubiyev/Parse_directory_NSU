@@ -1,0 +1,13 @@
+{% extends 'layouts/layout.html' %}
+
+{% block title %}Изменить данные Университета{% endblock %}
+
+{% block body %}
+<div class="container pt-3 pb-3 mb-2 mt-2">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Сохранить">
+    </form>
+</div>
+{% endblock %}

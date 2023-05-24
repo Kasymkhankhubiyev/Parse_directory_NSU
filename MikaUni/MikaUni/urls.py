@@ -17,6 +17,6 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('', include("mainapp.urls")),
+    path('', include("mainapp.urls")),  # добавляем ссылку на наше приложение, чтобы url с приложения просто добавлялись
     path('admin/', admin.site.urls),
 ]

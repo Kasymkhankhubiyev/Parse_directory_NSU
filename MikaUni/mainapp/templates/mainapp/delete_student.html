@@ -1,0 +1,18 @@
+{% extends 'layouts/layout.html' %}
+
+{% block title %}Удалить студента{% endblock %}
+
+{% block body %}
+<div class="container pt-3 my-3 border">
+    <h4>ФИО: {{ student.second_name }} {{ student.fitst_name }} {{ student.last_name }}</h4>
+    <h4>Дата рождения: {{ student.birth_date }}</h4>
+    <h4>Университет: {{ student.university }}</h4>
+    <h4>Дата поступления: {{ student.admission_date }}</h4>
+</div>
+<div class="container pt-2 my-2 mb-2">
+    <form method="post">
+        {% csrf_token %}
+        <input type="submit" value="Удалить">
+    </form>
+</div>
+{% endblock %}

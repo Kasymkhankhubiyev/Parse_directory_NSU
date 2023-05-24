@@ -1,0 +1,17 @@
+{% extends 'layouts/layout.html' %}
+
+{% block title %}Добавить университет{% endblock %}
+
+{% block body %}
+<div class="container pt-3 my-3">
+    <a href="{% url 'mainpage' %}" class="btn btn-primary">Главная</a>
+</div>
+<div class="container pt-3 my-3">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Добавить">
+    </form>
+</div>
+
+{% endblock %}

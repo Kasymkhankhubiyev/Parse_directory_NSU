@@ -1,15 +1,25 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>MikaUni</title>
-    </head>
-    <body>
+{% extends 'layouts/layout.html' %}
+
+        
+{% block title %}MikaUni{% endblock%}
+
+{% block body %}
+    <div class="container pt-3 my-3">
         <h1>Университеты</h1>
-        <div>
+        <a href="{% url 'AddUni' %}" class="btn btn-primary">Добавить Университет</a>
+        <div class="container mt-3">
             {% for uni in unis %}
-            <a href="{% url 'by_uni' uni.pk %}">{{ uni.short_name }}</a>
+            <div>
+                <a href="{% url 'by_uni' uni.pk %}">{{ uni.full_name }}</a>
+            </div>
             {% endfor %}
+            {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-warning" role="alert">
+                    Не удалось удалить университет.
+                </div>
+            {% endfor %}
+            {% endif %}
         </div>
-    </body>
-</html>
+    </div>
+{% endblock %}

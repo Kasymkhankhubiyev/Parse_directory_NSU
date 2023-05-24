@@ -1,0 +1,18 @@
+{% extends 'layouts/layout.html' %}
+
+{% block title %}Удалить университет{% endblock %}
+
+{% block body %}
+<div class="container pt-3 my-3 border">
+    <h4>Название университета: {{ uni.full_name }}</h4>
+    <h4>Краткое название: {{ uni.short_name }}</h4>
+    <h4>Дата основания: {{ uni.foundation_date }}</h4>
+    <h4>Количество студентов: {{ students_num }}</h4>
+</div>
+<div class="container pt-2 my-2 mb-2">
+    <form method="post">
+        {% csrf_token %}
+        <input type="submit" value="Удалить">
+    </form>
+</div>
+{% endblock %}
