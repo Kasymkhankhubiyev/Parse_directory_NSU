@@ -163,10 +163,13 @@ def process_directory(index: int, parent_is_first: bool, deep: int, item: str, p
                 |   |-- file (f)
             '''
             # разрезаем out на строки
+            # if deep > 1:
             lines = out.split('\n')
             for line in lines:
                 if len(line) > 0: # пустую строку в конце надо выкинуть
                     output += line[:(deep-1)*4] + '|   ' + line[deep*4 - 1:] + '\n'
+            # else: output += out
+
     else: # не первый в списке 
         if parent_is_first:
             output += delta * deep + line + other_sign + item + add_info_by_flags(path=os.path.join(path, item),
@@ -219,7 +222,10 @@ def pars_directory(path: str, deep: int, parent_is_first: bool, command_flags: d
             # Если родительская директория не была первой в своем списке
             # нужно вдоль вертикали устанавливать отступ '|   '.
             if parent_is_first == False:
-                line += '|   '
+                if deep > 2:
+                    line += '|   '
+                else:
+                    line += '    '
 
             # проверяем является ли элемент в списке файлом посредством функции: os.path.isfile(path),
             # если файл - возвращается True, иначе False
