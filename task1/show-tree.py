@@ -156,11 +156,11 @@ def process_directory(index: int, parent_is_first: bool, deep: int, item: str, p
 
             пример: 
                 Dir
-                `-- first_dir (d)
                 |-- second_dir (d)
                 |   `-- first_subdir (d)
                 |   |-- second_subdir (d)
                 |   |-- file (f)
+                `-- first_dir (d)
             '''
             # разрезаем out на строки
             # if deep > 1:
@@ -213,19 +213,18 @@ def pars_directory(path: str, deep: int, parent_is_first: bool, command_flags: d
     # если директория пустая - конец, иначе нужно пробежаться
     if len(_dir_inner) != 0:
 
+        first_dir = None
         # enumerate возвращается кортеж (пару значений): 
         # idx - индекс (порядковый номер) элемента массива и 
         # item - элемент массива соответствующий индексу
         for idx, item in enumerate(_dir_inner):
+            print(idx)
             line = ''
 
             # Если родительская директория не была первой в своем списке
             # нужно вдоль вертикали устанавливать отступ '|   '.
             if parent_is_first == False:
-                if deep > 2:
-                    line += '|   '
-                else:
-                    line += '    '
+                line += '|   '
 
             # проверяем является ли элемент в списке файлом посредством функции: os.path.isfile(path),
             # если файл - возвращается True, иначе False
@@ -235,9 +234,16 @@ def pars_directory(path: str, deep: int, parent_is_first: bool, command_flags: d
                                          path=path, command_flags=command_flags)
 
             elif os.path.isdir(os.path.join(path, item)): # является ли директорией, как в случае с файлом
-                dir_tree += process_directory(index=idx, parent_is_first=parent_is_first, deep=deep, item=item, 
+                if idx == 0:
+                    first_dir = process_directory(index=idx, parent_is_first=parent_is_first, deep=deep, item=item, 
+                                              path=path, line=line, command_flags=command_flags)
+                else:
+                    dir_tree += process_directory(index=idx, parent_is_first=parent_is_first, deep=deep, item=item, 
                                               path=path, line=line, command_flags=command_flags)
                 
+        if first_dir is not None:
+            dir_tree += first_dir
+
     return dir_tree
 
 
