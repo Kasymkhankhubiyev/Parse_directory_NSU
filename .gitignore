@@ -1,4 +1,5 @@
 /venv
+/drone/
 /task1/__pycache__
 /task2/__pycache__
 /task2/.ipynb_checkpoints
